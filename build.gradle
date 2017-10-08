@@ -1,0 +1,30 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.edu.wpi.first.wpilib.versioning:wpilib-version-plugin:2.0'
+        classpath 'org.ysb33r.gradle:doxygen:0.3.2'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin'
+
+if (!hasProperty('releaseType')) {
+    WPILibVersion {
+        releaseType = 'dev'
+    }
+}
+
+apply from: "java.gradle"
+apply from: "cpp.gradle"
+
+build.dependsOn zipJavaDocs
+build.dependsOn zipCppDocs

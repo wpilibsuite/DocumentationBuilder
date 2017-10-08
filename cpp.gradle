@@ -1,0 +1,78 @@
+apply plugin: 'org.ysb33r.doxygen'
+
+configurations {
+    cppSource
+}
+
+dependencies {
+    cppSource 'edu.wpi.first.wpiutil:wpiutil-cpp:+:sources@zip'
+    cppSource 'edu.wpi.first.ntcore:ntcore-cpp:+:sources@zip'
+    cppSource 'edu.wpi.first.cscore:cscore-cpp:+:sources@zip'
+    cppSource 'edu.wpi.first.wpilibc:wpilibc:+:sources@zip'
+    cppSource 'edu.wpi.first.wpiutil:wpiutil-cpp:+:headers@zip'
+    cppSource 'edu.wpi.first.ntcore:ntcore-cpp:+:headers@zip'
+    cppSource 'edu.wpi.first.cscore:cscore-cpp:+:headers@zip'
+    cppSource 'edu.wpi.first.wpilibc:wpilibc:+:headers@zip'
+}
+
+def cppDepLocation = "${buildDir}/cppSource"
+def cppFilesList = configurations.cppSource.files
+
+def cppDownloadList = []
+
+def cppFileLocations = []
+
+task downloadAllCpp {}
+
+configurations.cppSource.dependencies.each { dependency ->
+    def classifier = dependency.artifacts[0].classifier
+    def extension = dependency.artifacts[0].extension
+    def taskName = "download${dependency.group}${dependency.name}${classifier}"
+    def task = tasks.create(taskName, Copy) {
+        def file
+        cppFilesList.each {
+            if (it.toString().endsWith("${classifier}.${extension}") && it.toString().contains("${dependency.name}-".toString())) {
+                file = it
+            }
+        }
+        from rootProject.zipTree(file)
+        def fileLoc = "$cppDepLocation/${dependency.name.toLowerCase()}/${classifier}"
+        into fileLoc
+        cppFileLocations.add(fileLoc)
+    }
+    downloadAllCpp.dependsOn task
+    cppDownloadList.add(task)
+}
+
+doxygen {
+    generate_html true
+
+    cppFileLocations.each {
+        source file(it)
+    }
+
+    extension_mapping 'inc=C++'
+    project_name 'WPILibC++'
+    javadoc_autobrief true
+    recursive true
+    quiet true
+    warnings false
+    warn_if_doc_error false
+    warn_no_paramdoc false
+    warn_format false
+    warn_logfile false
+    warn_if_undocumented false
+    generate_latex false
+    html_timestamp true
+    generate_treeview true
+}
+
+doxygen.dependsOn downloadAllCpp
+
+task zipCppDocs(type: Zip) {
+    baseName = 'cppDocs'
+    destinationDir = buildDir
+    dependsOn doxygen
+    from ("$buildDir/docs/doxygen/html")
+    into '/'
+}
