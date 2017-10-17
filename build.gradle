@@ -15,6 +15,7 @@ repositories {
     mavenCentral()
 }
 
+apply plugin: 'maven-publish'
 apply plugin: 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin'
 
 if (!hasProperty('releaseType')) {
@@ -23,8 +24,34 @@ if (!hasProperty('releaseType')) {
     }
 }
 
+def pubVersion
+if (project.hasProperty("publishVersion")) {
+    pubVersion = project.publishVersion
+} else {
+    pubVersion = WPILibVersion.version
+}
+
 apply from: "java.gradle"
 apply from: "cpp.gradle"
 
 build.dependsOn zipJavaDocs
 build.dependsOn zipCppDocs
+
+publishing {
+  publications {
+    java(MavenPublication) {
+      artifact zipJavaDocs
+
+      artifactId = 'documentation'
+      groupId 'edu.wpi.first.wpilibj'
+      version pubVersion
+    }
+    cpp(MavenPublication) {
+      artifact zipCppDocs
+
+      artifactId = 'documentation'
+      groupId 'edu.wpi.first.wpilibc'
+      version pubVersion
+    }
+  }
+}
