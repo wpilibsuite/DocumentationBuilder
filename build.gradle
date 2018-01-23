@@ -33,8 +33,13 @@ if (project.hasProperty("publishVersion")) {
 
 apply from: "java.gradle"
 apply from: "cpp.gradle"
+apply from: "shuffleboard.gradle"
 
 build.dependsOn zipJavaDocs
+build.dependsOn zipShuffleboardApi
+build.dependsOn zipShuffleboardBasePlugin
+build.dependsOn zipShuffleboardNetworktablesPlugin
+build.dependsOn zipShuffleboardCameraserverPlugin
 build.dependsOn zipCppDocs
 
 publishing {
@@ -45,6 +50,34 @@ publishing {
       artifactId = 'documentation'
       groupId 'edu.wpi.first.wpilibj'
       version pubVersion
+    }
+    shuffleboardApi(MavenPublication) {
+      artifact zipShuffleboardApi
+
+      artifactId = 'api-documentation'
+      groupId 'edu.wpi.first.shuffleboard'
+      version pubVersion
+    }
+    shuffleboardBasePlugin(MavenPublication) {
+      artifact zipShuffleboardBasePlugin
+
+      artifactId = 'base-plugin-documentation'
+      groupId = 'edu.wpi.first.shuffleboard.plugin'
+      version = pubVersion
+    }
+    shuffleboardNetworktablesPlugin(MavenPublication) {
+      artifact zipShuffleboardNetworktablesPlugin
+
+      artifactId = 'networktables-plugin-documentation'
+      groupId = 'edu.wpi.first.shuffleboard.plugin'
+      version = pubVersion
+    }
+    shuffleboardCameraserverPlugin(MavenPublication) {
+      artifact zipShuffleboardCameraserverPlugin
+
+      artifactId = 'cameraserver-plugin-documentation'
+      groupId = 'edu.wpi.first.shuffleboard.plugin'
+      version = pubVersion
     }
     cpp(MavenPublication) {
       artifact zipCppDocs
