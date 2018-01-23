@@ -11,7 +11,7 @@ dependencies {
     shuffleboardSource 'edu.wpi.first.shuffleboard.plugin:cameraserver:+:javadoc'
 }
 
-def shuffleboardDepLocation = "${buildDir}/shuffleboardDocs"
+def shuffleboardDepLocation = "${buildDir}/docs"
 def shuffleboardFilesList = configurations.shuffleboardSource.files
 
 def shuffleboardDownloadList = []
@@ -24,7 +24,7 @@ configurations.shuffleboardSource.dependencies.each { dependency ->
     def classifier = dependency.artifacts[0].classifier
     def extension = dependency.artifacts[0].extension
     def taskName = "download-${dependency.group}:${dependency.name}:${classifier}"
-    def target = "$shuffleboardDepLocation/${dependency.group.toLowerCase()}-${dependency.name.toLowerCase()}"
+    def target = "$shuffleboardDepLocation/shuffleboard/${dependency.group.endsWith('plugin') ? 'plugin/' : ''}${dependency.name.toLowerCase()}"
     def task = tasks.create(taskName, Copy) {
         def file
         shuffleboardFilesList.each {
@@ -33,6 +33,7 @@ configurations.shuffleboardSource.dependencies.each { dependency ->
             }
         }
         from rootProject.zipTree(file)
+        exclude "META-INF/"
         into target
     }
     targets[dependency.name] = target
