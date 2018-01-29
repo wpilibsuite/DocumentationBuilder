@@ -1,0 +1,74 @@
+description = "Downloads and publishes all javadocs for shuffleboard's public APIs"
+
+configurations {
+    shuffleboardSource
+}
+
+dependencies {
+    shuffleboardSource 'edu.wpi.first.shuffleboard:api:+:javadoc'
+    shuffleboardSource 'edu.wpi.first.shuffleboard.plugin:base:+:javadoc'
+    shuffleboardSource 'edu.wpi.first.shuffleboard.plugin:networktables:+:javadoc'
+    shuffleboardSource 'edu.wpi.first.shuffleboard.plugin:cameraserver:+:javadoc'
+}
+
+def shuffleboardDepLocation = "${buildDir}/docs"
+def shuffleboardFilesList = configurations.shuffleboardSource.files
+
+def shuffleboardDownloadList = []
+
+task downloadAllShuffleboard {}
+
+Map<String, String> targets = new HashMap<>()
+
+configurations.shuffleboardSource.dependencies.each { dependency ->
+    def classifier = dependency.artifacts[0].classifier
+    def extension = dependency.artifacts[0].extension
+    def taskName = "download-${dependency.group}:${dependency.name}:${classifier}"
+    def target = "$shuffleboardDepLocation/shuffleboard/${dependency.group.endsWith('plugin') ? 'plugin/' : ''}${dependency.name.toLowerCase()}"
+    def task = tasks.create(taskName, Copy) {
+        def file
+        shuffleboardFilesList.each {
+            if (it.toString().endsWith("${classifier}.${extension}") && it.toString().contains("${dependency.name}-".toString())) {
+                file = it
+            }
+        }
+        from rootProject.zipTree(file)
+        exclude "META-INF/"
+        into target
+    }
+    targets[dependency.name] = target
+    downloadAllShuffleboard.dependsOn task
+    shuffleboardDownloadList.add(task)
+}
+
+task zipShuffleboardApi(type: Zip) {
+    dependsOn downloadAllShuffleboard
+    baseName = "shuffleboardApiDocs"
+    destinationDir = buildDir
+    from targets['api'] + "/javadoc"
+    into '/'
+}
+
+task zipShuffleboardBasePlugin(type: Zip) {
+    dependsOn downloadAllShuffleboard
+    baseName = "shuffleboardBasePluginDocs"
+    destinationDir = buildDir
+    from targets['base'] + "/javadoc"
+    into '/'
+}
+
+task zipShuffleboardNetworktablesPlugin(type: Zip) {
+    dependsOn downloadAllShuffleboard
+    baseName = "shuffleboardNetworktablesPluginDocs"
+    destinationDir = buildDir
+    from targets['networktables'] + "/javadoc"
+    into '/'
+}
+
+task zipShuffleboardCameraserverPlugin(type: Zip) {
+    dependsOn downloadAllShuffleboard
+    baseName = "shuffleboardCameraserverPluginDocs"
+    destinationDir = buildDir
+    from targets['cameraserver'] + "/javadoc"
+    into '/'
+}
