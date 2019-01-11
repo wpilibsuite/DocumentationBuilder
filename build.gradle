@@ -39,8 +39,11 @@ def extractJavaTask = tasks.register('extractJava', Copy) {
 build.dependsOn extractCppTask
 build.dependsOn extractJavaTask
 
-tasks.register('publish') {
-
+tasks.register('publish', Zip) {
+    destinationDir buildDir
+    baseName 'FakeDocs'
+    from ("$rootDir/shuffleboard.gradle")
+    into '/'
 }
 
 
