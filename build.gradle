@@ -28,12 +28,12 @@ dependencies {
 
 def extractCppTask = tasks.register('extractCpp', Copy) {
     from project.zipTree(configurations.documentationCpp.resolvedConfiguration.resolvedArtifacts.first().file)
-    into "$buildDir/cpp/doxygen/html"
+    into "$buildDir/docs/doxygen/html"
 }
 
 def extractJavaTask = tasks.register('extractJava', Copy) {
     from project.zipTree(configurations.documentationJava.resolvedConfiguration.resolvedArtifacts.first().file)
-    into "$buildDir/java/javadoc"
+    into "$buildDir/docs/javadoc"
 }
 
 build.dependsOn extractCppTask
