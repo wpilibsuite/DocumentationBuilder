@@ -39,6 +39,10 @@ def extractJavaTask = tasks.register('extractJava', Copy) {
 build.dependsOn extractCppTask
 build.dependsOn extractJavaTask
 
+tasks.register('publish') {
+
+}
+
 
 wrapper {
     gradleVersion = '5.0'
