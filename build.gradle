@@ -1,22 +1,7 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath 'gradle.plugin.edu.wpi.first.wpilib.versioning:wpilib-version-plugin:2.0'
-        classpath 'org.ysb33r.gradle:doxygen:0.3.2'
-    }
+plugins {
+    id 'base'
+    id "edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin" version "2.4"
 }
-
-repositories {
-    mavenCentral()
-}
-
-apply plugin: 'maven-publish'
-apply plugin: 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin'
 
 if (!hasProperty('releaseType')) {
     WPILibVersion {
@@ -31,60 +16,30 @@ if (project.hasProperty("publishVersion")) {
     pubVersion = WPILibVersion.version
 }
 
-apply from: "java.gradle"
-apply from: "cpp.gradle"
-apply from: "shuffleboard.gradle"
+configurations {
+  documentationJava
+  documentationCpp
+}
 
-build.dependsOn zipJavaDocs
-build.dependsOn zipShuffleboardApi
-build.dependsOn zipShuffleboardBasePlugin
-build.dependsOn zipShuffleboardNetworktablesPlugin
-build.dependsOn zipShuffleboardCameraserverPlugin
-build.dependsOn zipCppDocs
+dependencies {
+    documentationCpp "edu.wpi.first.wpilibc:documentation:+@zip"
+    documentationJava "edu.wpi.first.wpilibj:documentation:+@zip"
+}
 
-publishing {
-  publications {
-    java(MavenPublication) {
-      artifact zipJavaDocs
+def extractCppTask = tasks.register('extractCpp', Copy) {
+    from project.zipTree(configurations.documentationCpp.resolvedConfiguration.resolvedArtifacts.first().file)
+    into "$buildDir/cpp/doxygen/html"
+}
 
-      artifactId = 'documentation'
-      groupId 'edu.wpi.first.wpilibj'
-      version pubVersion
-    }
-    shuffleboardApi(MavenPublication) {
-      artifact zipShuffleboardApi
+def extractJavaTask = tasks.register('extractJava', Copy) {
+    from project.zipTree(configurations.documentationJava.resolvedConfiguration.resolvedArtifacts.first().file)
+    into "$buildDir/java/javadoc"
+}
 
-      artifactId = 'api-documentation'
-      groupId 'edu.wpi.first.shuffleboard'
-      version pubVersion
-    }
-    shuffleboardBasePlugin(MavenPublication) {
-      artifact zipShuffleboardBasePlugin
+build.dependsOn extractCppTask
+build.dependsOn extractJavaTask
 
-      artifactId = 'base-plugin-documentation'
-      groupId = 'edu.wpi.first.shuffleboard.plugin'
-      version = pubVersion
-    }
-    shuffleboardNetworktablesPlugin(MavenPublication) {
-      artifact zipShuffleboardNetworktablesPlugin
 
-      artifactId = 'networktables-plugin-documentation'
-      groupId = 'edu.wpi.first.shuffleboard.plugin'
-      version = pubVersion
-    }
-    shuffleboardCameraserverPlugin(MavenPublication) {
-      artifact zipShuffleboardCameraserverPlugin
-
-      artifactId = 'cameraserver-plugin-documentation'
-      groupId = 'edu.wpi.first.shuffleboard.plugin'
-      version = pubVersion
-    }
-    cpp(MavenPublication) {
-      artifact zipCppDocs
-
-      artifactId = 'documentation'
-      groupId 'edu.wpi.first.wpilibc'
-      version pubVersion
-    }
-  }
+wrapper {
+    gradleVersion = '5.0'
 }
