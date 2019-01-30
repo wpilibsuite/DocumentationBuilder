@@ -16,28 +16,71 @@ if (project.hasProperty("publishVersion")) {
     pubVersion = WPILibVersion.version
 }
 
+repositories {
+    mavenCentral()
+}
+
 configurations {
   documentationJava
   documentationCpp
+  shuffleboardApi
+  shuffleboardBase
+  shuffleboardNt
+  shuffleboardCs
 }
 
 dependencies {
     documentationCpp "edu.wpi.first.wpilibc:documentation:+@zip"
     documentationJava "edu.wpi.first.wpilibj:documentation:+@zip"
+    shuffleboardApi 'edu.wpi.first.shuffleboard:api:+:javadoc'
+    shuffleboardBase 'edu.wpi.first.shuffleboard.plugin:base:+:javadoc'
+    shuffleboardNt 'edu.wpi.first.shuffleboard.plugin:networktables:+:javadoc'
+    shuffleboardCs 'edu.wpi.first.shuffleboard.plugin:cameraserver:+:javadoc'
 }
 
 def extractCppTask = tasks.register('extractCpp', Copy) {
     from project.zipTree(configurations.documentationCpp.resolvedConfiguration.resolvedArtifacts.first().file)
-    into "$buildDir/docs/doxygen/html"
+    into "$buildDir/docs/cpp"
 }
 
 def extractJavaTask = tasks.register('extractJava', Copy) {
     from project.zipTree(configurations.documentationJava.resolvedConfiguration.resolvedArtifacts.first().file)
-    into "$buildDir/docs/javadoc"
+    into "$buildDir/docs/java"
 }
+
+def extractApiTask = tasks.register('extractShuffleboardApi', Copy) {
+    from (project.zipTree(configurations.shuffleboardApi.resolvedConfiguration.resolvedArtifacts.first().file)) {
+        include "javadoc/**"
+        includeEmptyDirs = false
+        eachFile { fcd ->
+            fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+        }
+    }
+    into "$buildDir/docs/shuffleboard/api"
+}
+
+def extractBaseTask = tasks.register('extractShuffleboardBase', Copy) {
+    from project.zipTree(configurations.shuffleboardBase.resolvedConfiguration.resolvedArtifacts.first().file)
+    into "$buildDir/docs/shuffleboard/base"
+}
+
+def extractNtTask = tasks.register('extractShufflboardNt', Copy) {
+    from project.zipTree(configurations.shuffleboardNt.resolvedConfiguration.resolvedArtifacts.first().file)
+    into "$buildDir/docs/shuffleboard/networktables"
+}
+
+def extractCsTask = tasks.register('extractShuffleboardCs', Copy) {
+    from project.zipTree(configurations.shuffleboardCs.resolvedConfiguration.resolvedArtifacts.first().file)
+    into "$buildDir/docs/shuffleboard/cameraserver"
+}
+
 
 build.dependsOn extractCppTask
 build.dependsOn extractJavaTask
+build.dependsOn extractApiTask
+build.dependsOn extractBaseTask
+build.dependsOn extractNtTask
+build.dependsOn extractCsTask
 
 tasks.register('publish', Zip) {
     destinationDir buildDir
@@ -45,7 +88,6 @@ tasks.register('publish', Zip) {
     from ("$rootDir/shuffleboard.gradle")
     into '/'
 }
-
 
 wrapper {
     gradleVersion = '5.0'
